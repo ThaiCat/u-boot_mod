@@ -2252,6 +2252,176 @@ static const clk_profile clk_profiles[] = {
 		},
 	}, {
 		/* Tested! */
+		680, 420, 210, 26,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(27, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(16, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(820)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(17, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(10, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(512)
+		},
+	},  {
+		/* Tested! */
+		720, 420, 210, 26,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(29, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(16, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(820)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(18, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(10, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(512)
+		},
+	},   {
+		/* Tested! */
+		740, 420, 210, 26,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(30, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(16, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(820)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(19, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(10, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(512)
+		},
+	}, {
+		/* Tested! */
+		760, 420, 210, 25,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(30, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(16, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(820)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(19, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(10, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(512)
+		},
+	},   {
+		/* Tested! */
+		760, 420, 210, 26,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(30, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(16, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(820)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(19, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(10, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(512)
+		},
+	}, {
+		/* Tested! */
+		800, 420, 210, 26,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(32, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(16, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(820)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(20, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(10, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(16),
+			_qca95xx_ddr_pll_dither_reg_val(512)
+		},
+	},   {
+		/* Tested! */
+		760, 440, 220, 25,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(30, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(17, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(19, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(11, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		},
+	},   {
+		/* Tested! */
+		760, 440, 220, 26,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(30, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(17, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(19, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(11, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		},
+	},     {
+		/* Tested! */
+		760, 440, 220, 27,
+		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(30, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(17, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(19, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(11, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		},
+	},     {
+		/* Tested! */
+		760, 440, 220, 22,
+		_qca95xx_spi_ctrl_addr_reg_val(10, 1, 0, 2),
+		{
+			_qca95xx_cpu_pll_cfg_reg_val(30, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(17, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		}, {
+			_qca95xx_cpu_pll_cfg_reg_val(19, 1, 0, 0, 0),
+			_qca95xx_ddr_pll_cfg_reg_val(11, 1, 1, 0, 0),
+			_qca95xx_cpu_ddr_clk_ctrl_reg_val(1, 1, 2, 1, 1, 1),
+			_qca95xx_cpu_pll_dither_reg_val(0),
+			_qca95xx_ddr_pll_dither_reg_val(0)
+		},
+	},   {
+		/* Tested! */
 		650, 450, 225, 28,
 		_qca95xx_spi_ctrl_addr_reg_val(8, 1, 0, 2),
 		{
@@ -2267,6 +2437,7 @@ static const clk_profile clk_profiles[] = {
 			_qca95xx_cpu_pll_dither_reg_val(16),
 			_qca95xx_ddr_pll_dither_reg_val(256)
 		},
+
 	},
 	#endif /* SOC_TYPE & QCA_AR933X_SOC */
 };

@@ -82,6 +82,25 @@ u32 qca_dram_type(void)
 		      & QCA_RST_BOOTSTRAP_MEM_TYPE_MASK)
 		     >> QCA_RST_BOOTSTRAP_MEM_TYPE_SHIFT);
 
+/*
+ * There are two major different versions of Dragino MS14. Initial one uses DDR1
+ * and a custom PCB. The new one is based on Dragino HE module which has DDR2.
+ *
+ * Both versions have a "bug" in DRAM type detection. They don't use both GPIOs
+ * (12 and 28) for setting DRAM type during bootstrap - only GPIO28 is used.
+ *
+ * Therefore, use a custom DRAM type detection here (ignore LSB bit)
+ */
+#if defined(CONFIG_FOR_DRAGINO_MS14)    ||\
+    defined(CONFIG_FOR_HAK5_LAN_TURTLE) ||\
+    defined(CONFIG_FOR_VILLAGE_TELCO_MP2)
+	dram_type = dram_type >> 1;
+
+	if (dram_type)
+		dram_type = RAM_MEMORY_TYPE_DDR2;
+	else
+		dram_type = RAM_MEMORY_TYPE_DDR1;
+#else
 	switch (dram_type) {
 	case QCA_RST_BOOTSTRAP_MEM_TYPE_SDR_VAL:
 		dram_type = RAM_MEMORY_TYPE_SDR;
@@ -96,6 +115,7 @@ u32 qca_dram_type(void)
 		dram_type = RAM_MEMORY_TYPE_UNKNOWN;
 		break;
 	}
+#endif
 
 	return dram_type;
 #endif

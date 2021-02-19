@@ -226,7 +226,7 @@ void ArpRequest(void){
 
 	if((NetArpWaitPacketIP & NetOurSubnetMask) != (NetOurIP & NetOurSubnetMask)){
 		if(NetOurGatewayIP == 0){
-			puts("** Warning: gatewayip needed but not set\n");
+			printf_wrn("gatewayip needed but not set\n");
 			NetArpWaitReplyIP = NetArpWaitPacketIP;
 		} else {
 			NetArpWaitReplyIP = NetOurGatewayIP;
@@ -254,7 +254,7 @@ void ArpTimeoutCheck(void){
 		NetArpWaitTry++;
 
 		if(NetArpWaitTry >= ARP_TIMEOUT_COUNT){
-			puts("## Error: ARP retry count exceeded, starting again\n");
+			printf_err("ARP retry count exceeded, starting again\n");
 			NetArpWaitTry = 0;
 			NetStartAgain();
 		} else {
@@ -344,7 +344,8 @@ int NetLoop(proto_t protocol){
 		case SNTP:
 #endif
 		case NETCONS:
-		case TFTP:
+		case TFTPGET:
+		case TFTPPUT:
 			NetCopyIP(&NetOurIP, &bd->bi_ip_addr);
 
 			NetOurGatewayIP		= getenv_IPaddr("gatewayip");
@@ -357,7 +358,8 @@ int NetLoop(proto_t protocol){
 				case NFS:
 #endif
 				case NETCONS:
-				case TFTP:
+				case TFTPGET:
+				case TFTPPUT:
 					NetServerIP = getenv_IPaddr("serverip");
 					break;
 #if defined(CONFIG_CMD_PING)
@@ -412,10 +414,13 @@ int NetLoop(proto_t protocol){
 #ifdef CONFIG_NET_MULTI
 			NetDevExists = 1;
 #endif
+			NetBootFileXferSize = 0;
+
 			switch(protocol){
-				case TFTP:
+				case TFTPGET:
+				case TFTPPUT:
 					/* always use ARP to get server ethernet address */
-					TftpStart();
+					TftpStart(protocol);
 					break;
 
 #if defined(CONFIG_CMD_DHCP)
@@ -457,7 +462,6 @@ int NetLoop(proto_t protocol){
 					break;
 			}
 
-			NetBootFileXferSize = 0;
 			break;
 	}
 
@@ -511,10 +515,10 @@ int NetLoop(proto_t protocol){
 					char buf[10];
 					printf("\nBytes transferred: %ld (0x%lx)\n", NetBootFileXferSize, NetBootFileXferSize);
 
-					sprintf(buf, "%lx", NetBootFileXferSize);
+					sprintf(buf, "0x%lX", NetBootFileXferSize);
 					setenv("filesize", buf);
 
-					sprintf(buf, "%lX", (unsigned long)load_addr);
+					sprintf(buf, "0x%lX", (unsigned long)load_addr);
 					setenv("fileaddr", buf);
 				}
 
@@ -866,7 +870,7 @@ void NetReceive(volatile uchar * inpkt, int len){
 			arp = (ARP_t *)ip;
 
 			if(len < ARP_HDR_SIZE){
-				printf("## Error: bad length %d < %d\n", len, ARP_HDR_SIZE);
+				printf_err("bad length %d < %d\n", len, ARP_HDR_SIZE);
 				return;
 			}
 
@@ -946,7 +950,7 @@ void NetReceive(volatile uchar * inpkt, int len){
 					return;
 				default:
 #ifdef ET_DEBUG
-					printf("## Error: unexpected ARP opcode 0x%x\n", ntohs(arp->ar_op));
+					printf_err("unexpected ARP opcode 0x%x\n", ntohs(arp->ar_op));
 #endif
 					return;
 			}
@@ -958,12 +962,12 @@ void NetReceive(volatile uchar * inpkt, int len){
 #endif
 			arp = (ARP_t *)ip;
 			if(len < ARP_HDR_SIZE){
-				printf("## Error: bad length %d < %d\n", len, ARP_HDR_SIZE);
+				printf_err("bad length %d < %d\n", len, ARP_HDR_SIZE);
 				return;
 			}
 
 			if((ntohs(arp->ar_op) != RARPOP_REPLY) || (ntohs(arp->ar_hrd) != ARP_ETHER) || (ntohs(arp->ar_pro) != PROT_IP) || (arp->ar_hln != 6) || (arp->ar_pln != 4)){
-				puts("## Error: invalid RARP header\n");
+				printf_err("invalid RARP header\n");
 			} else {
 				NetCopyIP(&NetOurIP, &arp->ar_data[16]);
 				if(NetServerIP == 0){
@@ -985,7 +989,7 @@ void NetReceive(volatile uchar * inpkt, int len){
 			}
 
 			if(len < ntohs(ip->ip_len)){
-				printf("## Error: len bad %d < %d\n", len, ntohs(ip->ip_len));
+				printf_err("len bad %d < %d\n", len, ntohs(ip->ip_len));
 				return;
 			}
 
@@ -1003,7 +1007,8 @@ void NetReceive(volatile uchar * inpkt, int len){
 
 			if(!NetCksumOk((uchar *)ip, IP_HDR_SIZE_NO_UDP / 2)){
 #ifdef ET_DEBUG
-				puts("\n## Error: checksum bad\n");
+				puts("\n");
+				printf_err("checksum bad\n");
 #endif
 				return;
 			}
@@ -1097,7 +1102,7 @@ void NetReceive(volatile uchar * inpkt, int len){
 				}
 
 				if((xsum != 0x00000000) && (xsum != 0x0000ffff)){
-					printf("## Error: UDP wrong checksum %08x %08x\n", xsum, ntohs(ip->udp_xsum));
+					printf_err("UDP wrong checksum %08x %08x\n", xsum, ntohs(ip->udp_xsum));
 					return;
 				}
 			}
@@ -1122,7 +1127,7 @@ static int net_check_prereq(proto_t protocol){
 #if defined(CONFIG_CMD_PING)
 		case PING:
 			if(NetPingIP == 0){
-				puts("## Error: ping address not given\n");
+				printf_err("ping address not given\n");
 				return(1);
 			}
 			goto common;
@@ -1130,7 +1135,7 @@ static int net_check_prereq(proto_t protocol){
 #if defined(CONFIG_CMD_SNTP)
 		case SNTP:
 			if(NetNtpServerIP == 0){
-				puts("## Error: NTP server address not given\n");
+				printf_err("NTP server address not given\n");
 				return(1);
 			}
 			goto common;
@@ -1139,16 +1144,17 @@ static int net_check_prereq(proto_t protocol){
 		case NFS:
 #endif
 		case NETCONS:
-		case TFTP:
+		case TFTPGET:
+		case TFTPPUT:
 			if(NetServerIP == 0){
-				puts("## Error: serverip not set\n");
+				printf_err("serverip not set\n");
 				return(1);
 			}
 #if defined(CONFIG_CMD_PING) || defined(CONFIG_CMD_SNTP)
 			common:
 #endif
 			if(NetOurIP == 0){
-				puts("## Error: ipaddr not set\n");
+				printf_err("ipaddr not set\n");
 				return(1);
 			}
 			/* Fall through */
@@ -1164,20 +1170,20 @@ static int net_check_prereq(proto_t protocol){
 
 				switch(num){
 					case -1:
-						puts("## Error: no ethernet found\n");
+						printf_err("no ethernet found\n");
 						return(1);
 					case 0:
-						puts("## Error: ethaddr not set\n");
+						printf_err("ethaddr not set\n");
 						break;
 					default:
-						printf("## Error: eth%daddr not set\n", num);
+						printf_err("eth%daddr not set\n", num);
 						break;
 				}
 
 				NetStartAgain();
 				return(2);
 #else
-				puts("## Error: ethaddr not set\n");
+				printf_err("ethaddr not set\n");
 				return(1);
 #endif
 			}
@@ -1377,8 +1383,6 @@ ushort getenv_VLAN(char *var){
 
 #if defined(CONFIG_CMD_HTTPD)
 
-#define BUF	((struct uip_eth_hdr *)&uip_buf[0])
-
 void NetSendHttpd(void){
 	volatile uchar *tmpbuf = NetTxPacket;
 	int i;
@@ -1395,10 +1399,12 @@ void NetSendHttpd(void){
 }
 
 void NetReceiveHttpd(volatile uchar * inpkt, int len){
+	struct uip_eth_hdr *eth_hdr = (struct uip_eth_hdr *)uip_buf;
+
 	memcpy(uip_buf, (const void *)inpkt, len);
 	uip_len = len;
 
-	if(BUF->type == htons(UIP_ETHTYPE_IP)){
+	if(eth_hdr->type == htons(UIP_ETHTYPE_IP)){
 		uip_arp_ipin();
 		uip_input();
 
@@ -1406,7 +1412,7 @@ void NetReceiveHttpd(volatile uchar * inpkt, int len){
 			uip_arp_out();
 			NetSendHttpd();
 		}
-	} else if(BUF->type == htons(UIP_ETHTYPE_ARP)){
+	} else if(eth_hdr->type == htons(UIP_ETHTYPE_ARP)){
 		uip_arp_arpin();
 
 		if(uip_len > 0){
@@ -1478,7 +1484,7 @@ int NetLoopHttpd(void){
 
 	if(ethinit_attempt > 0){
 		eth_halt();
-		printf("## Error: couldn't initialize eth (cable disconnected?)!\n\n");
+		printf_err("couldn't initialize eth (cable disconnected?)!\n\n");
 		return(-1);
 	}
 
@@ -1533,8 +1539,34 @@ int NetLoopHttpd(void){
 
 	webfailsafe_is_running = 1;
 
+	int led_off = 0;
+	int cnt_up = 1;
+	int cnt = 0;
+
 	// infinite loop
 	for(;;){
+		if (cnt == led_off)
+			all_led_off();
+		else if (cnt == 0)
+			all_led_on();
+
+		cnt++;
+
+		if (cnt == 1024) {
+			cnt = 0;
+
+			if (cnt_up) {
+				led_off++;
+
+				if (led_off == 1024)
+					cnt_up = 0;
+			} else {
+				led_off--;
+
+				if (led_off == 0)
+					cnt_up = 1;
+			}
+		}
 
 		/*
 		 *	Check the ethernet for a new packet.
@@ -1555,6 +1587,8 @@ int NetLoopHttpd(void){
 
 			/* Invalidate the last protocol */
 			eth_set_last_protocol(BOOTP);
+
+			all_led_off();
 
 			printf("\nWeb failsafe mode aborted!\n\n");
 			return(-1);
@@ -1593,6 +1627,8 @@ int NetLoopHttpd(void){
 	NetBootFileXferSize = 0;
 
 	do_http_progress(WEBFAILSAFE_PROGRESS_UPGRADE_FAILED);
+
+	all_led_off();
 
 	// go to restart
 	goto restart;

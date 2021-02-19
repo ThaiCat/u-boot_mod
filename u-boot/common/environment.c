@@ -122,6 +122,9 @@ env_t environment __PPCENV__ = {
 #if defined(CONFIG_BOOTCOMMAND)
 		"bootcmd=" CONFIG_BOOTCOMMAND "\0"
 #endif
+#if defined(CONFIG_AUTOBOOT_STOP_STR)
+		"bootstopkey=" CONFIG_AUTOBOOT_STOP_STR "\0"
+#endif
 #if defined(CONFIG_RAMBOOTCOMMAND)
 		"ramboot=" CONFIG_RAMBOOTCOMMAND "\0"
 #endif
@@ -187,6 +190,9 @@ env_t environment __PPCENV__ = {
 #endif
 #if defined(CONFIG_PCI_BOOTDELAY) && (CONFIG_PCI_BOOTDELAY > 0)
 		"pcidelay=" MK_STR(CONFIG_PCI_BOOTDELAY) "\0"
+#endif
+#if defined(CONFIG_LSDK_KERNEL)
+		"lsdk_kernel=1\0"
 #endif
 #if defined(CONFIG_EXTRA_ENV_SETTINGS)
 		CONFIG_EXTRA_ENV_SETTINGS

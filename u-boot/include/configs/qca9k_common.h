@@ -20,10 +20,6 @@
 	#define CONFIG_BOOTDELAY	1
 #endif
 
-#if !defined(CONFIG_MENUPROMPT)
-	#define CONFIG_MENUPROMPT	"Hit any key to stop booting: %2d "
-#endif
-
 /* Allow to disable console output, don't display console info */
 #define CONFIG_SILENT_CONSOLE	1
 #define CFG_CONSOLE_INFO_QUIET	1
@@ -109,14 +105,17 @@
 #define CONFIG_CMD_ECHO
 #define CONFIG_CMD_ENV
 #define CONFIG_CMD_FLASH
+#define CONFIG_CMD_GPIO
 #define CONFIG_CMD_HTTPD
 #define CONFIG_CMD_IMI
 #define CONFIG_CMD_ITEST
 #define CONFIG_CMD_LED
 #define CONFIG_CMD_LOADB
+#define CONFIG_CMD_MAC
 #define CONFIG_CMD_MEMORY
 #define CONFIG_CMD_NET
 #define CONFIG_CMD_PING
+#define CONFIG_CMD_RSTBYWDT
 #define CONFIG_CMD_RUN
 #define CONFIG_CMD_SETEXPR
 #define CONFIG_CMD_SLEEP

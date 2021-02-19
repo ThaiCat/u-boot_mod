@@ -58,6 +58,15 @@ ifndef CROSS_COMPILE
 endif
 export CROSS_COMPILE
 
+# By default, optimization for size (-Os) is enabled, set below option
+# to n or remove it if you want only basic optimization (-O/-O1)
+# BUILD_OPTIMIZED = n
+
+ifneq ($(BUILD_OPTIMIZED), n)
+  BUILD_OPTIMIZED = y
+endif
+export BUILD_OPTIMIZED
+
 # ==========================================================================
 
 # =======================
@@ -89,9 +98,21 @@ $(if $(IMG_LZMA),\
 )
 endef
 
+define git_branch
+$(shell git symbolic-ref --short -q HEAD 2>/dev/null || echo "unknown")
+endef
+
+define git_hash
+$(shell git rev-parse --short=8 -q HEAD 2>/dev/null || echo "unknown")
+endef
+
+define git_branch_hash
+git_$(call git_branch)-$(call git_hash)
+endef
+
 # $(1): file extension
 define img_name
-u-boot_mod__$(shell date +"%Y%m%d")__$@$(if \
+u-boot_mod__$@__$(shell date +"%Y%m%d")__$(call git_branch_hash)$(if \
 $(filter $(IMG_RAM),1),__RAM-LOAD-ONLY)$(if $(1),.$(1))
 endef
 
@@ -188,14 +209,17 @@ endef
 
 COMMON_AR933X_TARGETS = \
 	gainstrong_oolite_v1_dev \
-	gl-innovations_gl-inet-6416 \
-	tp-link_tl-mr10u \
-	tp-link_tl-mr13u \
-	tp-link_tl-mr3020 \
-	tp-link_tl-mr3040 \
+	gl-inet_6416 \
+	hak5_lan-turtle \
+	hak5_packet-squirrel \
+	hak5_wifi-pineapple-nano \
+	tp-link_tl-mr10u_v1 \
+	tp-link_tl-mr13u_v1 \
+	tp-link_tl-mr3020_v1 \
+	tp-link_tl-mr3040_v1v2 \
 	tp-link_tl-mr3220_v2 \
-	tp-link_tl-wr703n \
-	tp-link_tl-wr710n \
+	tp-link_tl-wr703n_v1 \
+	tp-link_tl-wr710n_v1 \
 	tp-link_tl-wr720n_v3_CN \
 	tp-link_tl-wr740n_v4
 
@@ -203,25 +227,44 @@ $(COMMON_AR933X_TARGETS):
 	@$(call build,123,1)
 
 COMMON_ETHS27_TARGETS = \
+	gainstrong_oolite_v5.2 \
+	gainstrong_oolite_v5.2_dev \
+	tp-link_tl-mr22u_v1 \
 	tp-link_tl-mr3420_v2 \
+	tp-link_tl-mr3420_v3 \
+	tp-link_tl-mr6400_v1v2 \
 	tp-link_tl-wa801nd_v2 \
 	tp-link_tl-wa830re_v2 \
-	tp-link_tl-wdr3500 \
-	tp-link_tl-wr802n \
-	tp-link_tl-wr810n \
-	tp-link_tl-wr820n_CN \
+	tp-link_tl-wa850re_v2 \
+	tp-link_tl-wdr3500_v1 \
+	tp-link_tl-wr802n_v1 \
+	tp-link_tl-wr810n_v1 \
+	tp-link_tl-wr810n_v2 \
+	tp-link_tl-wr820n_v1_CN \
 	tp-link_tl-wr841n_v10 \
 	tp-link_tl-wr841n_v11 \
 	tp-link_tl-wr841n_v8 \
-	tp-link_tl-wr841n_v9
+	tp-link_tl-wr841n_v9 \
+	tp-link_tl-wr842n_v3 \
+	tp-link_tl-wr902ac_v1
 
 $(COMMON_ETHS27_TARGETS):
 	@$(call build,123,1,ETH_CONFIG=_s27)
 
 8devices_carambola2 \
 alfa-network_hornet-ub \
-gl-innovations_gl-ar150:
+alfa-network_tube2h \
+creatcomm-technology_d3321 \
+gl-inet_gl-ar150 \
+gl-inet_gl-usb150:
 	@$(call build,256,1)
+
+alfa-network_ap121f:
+	@$(call build,192,1)
+
+alfa-network_n5q \
+alfa-network_r36a:
+	@$(call build,384,1,ETH_CONFIG=_s27)
 
 comfast_cf-e314n \
 comfast_cf-e320n_v2 \
@@ -229,14 +272,29 @@ comfast_cf-e520n \
 comfast_cf-e530n:
 	@$(call build,64,1,ETH_CONFIG=_s27)
 
-d-link_dir-505:
+d-link_dir-505_a1:
 	@$(call build,64,1)
 
-dragino_v2_ms14:
+dragino_ms14:
 	@$(call build,192,1,DEVICE_VENDOR=dragino)
 
-tp-link_tl-wdr3600 \
-tp-link_tl-wdr43x0:
+engenius_ens202ext \
+gl-inet_gl-ar300 \
+gl-inet_gl-ar300m-lite \
+gl-inet_gl-ar750 \
+p2w_cpe505n \
+p2w_r602n \
+yuncore_ap90q \
+yuncore_cpe830 \
+yuncore_t830 \
+whqx_e600g_v2 \
+whqx_e600gac_v2 \
+zbtlink_zbt-we1526:
+	@$(call build,256,1,ETH_CONFIG=_s27)
+
+tp-link_tl-wdr3600_v1 \
+tp-link_tl-wdr43x0_v1 \
+tp-link_tl-wr1041n_v2:
 	@$(call build,123,1,ETH_CONFIG=_s17)
 
 unwireddevices_unwired-one:
@@ -248,15 +306,8 @@ village-telco_mesh-potato_v2:
 wallys_dr531:
 	@$(call build,192,1,ETH_CONFIG=_s27)
 
-yuncore_ap90q \
-yuncore_cpe830:
-	@$(call build,256,1,ETH_CONFIG=_s27)
-
 yuncore_cpe870:
 	@$(call build,64,1,ETH_CONFIG=_s27)
-
-zbtlink_zbt-we1526:
-	@$(call build,256,1,ETH_CONFIG=_s27)
 
 # =============
 # CLEAN TARGETS

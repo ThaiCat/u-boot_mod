@@ -48,7 +48,7 @@
 		"uboot_size=" MK_STR(CONFIG_UPG_SCRIPTS_UBOOT_SIZE_HEX) "\0" \
 		"uboot_upg=" \
 			"if ping $serverip; then " \
-				"tftp $loadaddr $uboot_name && " \
+				"tftpb $loadaddr $uboot_name && " \
 				"if itest.l $filesize <= $uboot_size; then " \
 					"erase $uboot_addr +$uboot_size && " \
 					"cp.b $loadaddr $uboot_addr $uboot_size && " \
@@ -69,7 +69,7 @@
 			"if ping $serverip; then " \
 				"mw.b $loadaddr 0xFF $uboot_bckp && " \
 				"cp.b $uboot_addr $loadaddr $uboot_bckp && " \
-				"tftp $loadaddr $uboot_name && " \
+				"tftpb $loadaddr $uboot_name && " \
 				"if itest.l $filesize <= $uboot_size; then " \
 					"erase $uboot_addr +$uboot_bckp && " \
 					"cp.b $loadaddr $uboot_addr $uboot_bckp && " \
@@ -99,7 +99,7 @@
 		"fw_addr=" MK_STR(CONFIG_UPG_SCRIPTS_FW_ADDR_HEX) "\0" \
 		"fw_upg=" \
 			"if ping $serverip; then " \
-				"tftp $loadaddr $bootfile && " \
+				"tftpb $loadaddr $bootfile && " \
 				"erase $fw_addr +$filesize && " \
 				"cp.b $loadaddr $fw_addr $filesize && " \
 				"echo DONE! Firmware upgraded!; " \
@@ -112,17 +112,15 @@
 /*
  * Recovery
  */
-#if defined(CONFIG_BTN_RECOVERY_SCRIPT)
+#if defined(CONFIG_BTN_RECOVERY_SCRIPT) &&\
+    defined(CONFIG_GPIO_RESET_BTN)
 
 	#if !defined(CONFIG_CMD_BUTTON) ||\
 	    !defined(CONFIG_CMD_SLEEP)  ||\
 	    !defined(CONFIG_CMD_LED)    ||\
+	    !defined(CONFIG_CMD_ITEST)  ||\
 	    !defined(CONFIG_CMD_SETEXPR)
-		#error "Commands setexpr, sleep, button and led{on, off} are required for recovery"
-	#endif
-
-	#if !defined(CONFIG_GPIO_RESET_BTN)
-		#error "Reset button definition is required for recovery"
+		#error "Commands setexpr, itest, sleep, button and led{on, off} are required for recovery"
 	#endif
 
 	#if defined(CONFIG_CMD_HTTPD)
@@ -130,16 +128,16 @@
 		"echo - 3s for web based recovery;"
 
 		#define SCRIPT_HTTP_PART_2	\
-		"elif test $cnt -ge 3; then " \
+		"elif itest $cnt >= 3; then " \
 			"echo HTTP server is starting for firmware update...;" \
 			"setenv stop_boot 1;" \
 			"echo;" \
 			"httpd;" \
-		"elif test $cnt -lt 3; then "
+		"elif itest $cnt < 3; then "
 	#else
 		#define SCRIPT_HTTP_PART_1	""
 		#define SCRIPT_HTTP_PART_2	\
-		"elif test $cnt -lt 5; then "
+		"elif itest $cnt < 5; then "
 	#endif
 
 	#define CONFIG_ENV_BTN_RECOVERY_SCRIPT	\
@@ -147,12 +145,13 @@
 		"if button; then " \
 			"sleep 600;" \
 			"setenv cnt 0;" \
+			"setenv stop_boot;" \
 			"echo Keep button pressed for at least:;" \
 			SCRIPT_HTTP_PART_1 \
 			"echo - 5s for U-Boot console;" \
 			"echo - 7s for network console;" \
 			"echo;" \
-			"while button; do " \
+			"while button && itest $cnt < 0xA; do " \
 				"ledon;" \
 				"sleep 300;" \
 				"echo . \'\\\\c\';" \
@@ -161,14 +160,18 @@
 				"sleep 600;" \
 				"setexpr cnt $cnt + 1;" \
 			"done;" \
-			"echo $cnt seconds;" \
+			"echo 0x$cnt seconds;" \
 			"echo;" \
-			"if test $cnt -ge 7; then " \
+			"if itest $cnt >= 0xA; then " \
+				"echo \\#\\# Error: 10s limit reached!;" \
+				"echo Continuing normal boot...;" \
+				"echo;" \
+			"elif itest $cnt >= 7; then " \
 				"echo Starting network console...;" \
 				"setenv stop_boot 1;" \
 				"echo;" \
 				"startnc;" \
-			"elif test $cnt -ge 5; then " \
+			"elif itest $cnt >= 5; then " \
 				"echo Starting U-Boot console...;" \
 				"setenv stop_boot 1;" \
 				"echo;" \
@@ -176,9 +179,10 @@
 				"echo \\#\\# Error: button was not pressed long enough!;" \
 				"echo Continuing normal boot...;" \
 				"echo;" \
-			"fi;"\
+			"fi;" \
+			"setenv cnt;" \
 		"fi\0"
 
-#endif /* CONFIG_BTN_RECOVERY_SCRIPT */
+#endif /* CONFIG_BTN_RECOVERY_SCRIPT && CONFIG_GPIO_RESET_BTN */
 
 #endif /* _ENV_SCRIPTS_H_ */

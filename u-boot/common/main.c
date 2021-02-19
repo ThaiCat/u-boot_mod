@@ -32,6 +32,12 @@
 DECLARE_GLOBAL_DATA_PTR;
 #endif
 
+#define MAX_STOPSTR_LEN	16
+
+#if defined(CONFIG_CMD_HTTPD)
+#include <net.h>
+#endif
+
 static char *delete_char(char *buffer, char *p, int *colp, int *np, int plen);
 static int parse_line(char *, char *[]);
 
@@ -49,7 +55,13 @@ static char tab_seq[] = "        ";	/* used to expand TABs */
 static __inline__ int abortboot(int bootdelay)
 {
 	int abort = 0;
-	char stopc;
+	int tested = 0;
+	int stopstr_len = 0;
+	int envstopstr_len = 0;
+
+	char c;
+	char *envstopstr;
+	char stopstr[MAX_STOPSTR_LEN] = { 0 };
 
 #if defined(CONFIG_SILENT_CONSOLE)
 	if (gd->flags & GD_FLG_SILENT) {
@@ -59,39 +71,71 @@ static __inline__ int abortboot(int bootdelay)
 	}
 #endif
 
-	if (bootdelay > 0) {
-#if defined(CONFIG_MENUPROMPT)
-		printf(CONFIG_MENUPROMPT, bootdelay);
-#else
-		printf("Hit any key to stop booting: %2d ", bootdelay);
-#endif
+	if (bootdelay <= 0)
+		return abort;
 
-		while ((bootdelay > 0) && (!abort)) {
-			int i;
+	/* Check value of 'bootstopkey' and just ignore it if it's over limit */
+	envstopstr = getenv("bootstopkey");
+	if (envstopstr) {
+		envstopstr_len = strlen(envstopstr);
 
-			--bootdelay;
-
-			/* delay 100 * 10ms */
-			for (i = 0; !abort && i < 100; ++i) {
-				/* we got a key press */
-				if (tstc()) {
-					stopc = getc();
-#if defined(CONFIG_AUTOBOOT_STOP_CHAR)
-					if (stopc == CONFIG_AUTOBOOT_STOP_CHAR) {
-#else
-					if (stopc != 0) {
-#endif
-						abort = 1;
-						bootdelay = 0;
-						break;
-					}
-				}
-				udelay(10000);
-			}
-			printf("\b\b%d ", bootdelay);
-		}
-		printf("\n\n");
+		if (envstopstr_len > MAX_STOPSTR_LEN)
+			envstopstr = NULL;
 	}
+
+#if defined(CONFIG_MENUPROMPT)
+	printf(CONFIG_MENUPROMPT, bootdelay);
+#else
+	/*
+	 * Use custom CONFIG_MENUPROMPT if bootstopkey
+	 * string contains nonprintable characters (e.g. ESC)
+	 */
+	if (envstopstr)
+		printf("Enter '%s' to stop booting: %2d", envstopstr, bootdelay);
+	else
+		printf("Hit any key to stop booting: %2d", bootdelay);
+#endif
+
+	while ((bootdelay > 0) && (!abort)) {
+		int i;
+
+		--bootdelay;
+
+		/* delay 500 * 2 ms */
+		for (i = 0; !abort && i < 500; ++i, udelay(2000)) {
+			if (!tstc() || tested)
+				continue;
+
+			/* Ignore nulls */
+			c = getc();
+			if (c == 0)
+				continue;
+
+			/* Interrupt by any key if bootstopkey isn't used */
+			if (!envstopstr) {
+				abort = 1;
+				bootdelay = 0;
+				break;
+			}
+
+			/* Consume characters up to the strlen(envstopstr) */
+			if (stopstr_len < envstopstr_len)
+				stopstr[stopstr_len++] = c;
+
+			if (stopstr_len == envstopstr_len) {
+
+				if (memcmp(envstopstr, stopstr,
+					   envstopstr_len) == 0) {
+					abort = 1;
+					bootdelay = 0;
+					break;
+				} else
+					tested = 1;
+			}
+		}
+		printf("\b\b%2d", bootdelay);
+	}
+	puts("\n\n");
 
 #if defined(CONFIG_SILENT_CONSOLE)
 	if (abort) {
@@ -116,8 +160,10 @@ static __inline__ int abortboot(int bootdelay)
 void main_loop(void)
 {
 	char *bootcmd;
+	int rc = 0;
 
-#if defined(CONFIG_BTN_RECOVERY_SCRIPT)
+#if defined(CONFIG_BTN_RECOVERY_SCRIPT) &&\
+    defined(CONFIG_GPIO_RESET_BTN)
 	int stop_boot;
 	char *c;
 #endif
@@ -125,7 +171,6 @@ void main_loop(void)
 #ifndef CFG_HUSH_PARSER
 	static char lastcommand[CFG_CBSIZE] = { 0, };
 	int flag, len;
-	int rc = 1;
 #endif
 
 #if defined(CONFIG_BOOTDELAY) &&\
@@ -149,7 +194,8 @@ void main_loop(void)
 #endif
 
 /* Recovery mode before normal boot */
-#if defined(CONFIG_BTN_RECOVERY_SCRIPT)
+#if defined(CONFIG_BTN_RECOVERY_SCRIPT) &&\
+    defined(CONFIG_GPIO_RESET_BTN)
 	if (reset_button_status()) {
 		#if defined(CONFIG_SILENT_CONSOLE)
 		if (gd->flags & GD_FLG_SILENT) {
@@ -162,16 +208,57 @@ void main_loop(void)
 		gd->flags &= ~(GD_FLG_SILENT);
 		#endif
 
-		run_command("run recovery", 0);
+		c = getenv("recovery");
 
-		/* Should we stop booting after recovery mode? */
-		c = getenv("stop_boot");
-		stop_boot = c ? (int)simple_strtol(c, NULL, 10) : 0;
+		/*
+		 * If recovery script is missing in saved env, try default one,
+		 * copy 'recovery' var (if available) from it and save changes
+		 */
+		#if defined(CONFIG_CMD_ENV) && defined(CONFIG_CMD_FLASH)
+		if (c == NULL && gd->env_valid) {
+			gd->env_valid = 0;
+			c = getenv("recovery");
+			gd->env_valid = 1;
 
-		if (stop_boot)
-			bootcmd = NULL;
+			if (c) {
+				if (setenv("recovery", c) == 0)
+					saveenv();
+				else
+					c = NULL;
+			}
+		}
+		#endif
+
+		if (c) {
+			/*
+			 * Always clear values of variables used in recovery
+			 * script as they could be accidentally saved before
+			 */
+			setenv("stop_boot", NULL);
+			setenv("cnt", NULL);
+
+			run_command("run recovery", 0);
+
+			/* Should we stop booting after recovery mode? */
+			c = getenv("stop_boot");
+			stop_boot = c ? (int)simple_strtol(c, NULL, 10) : 0;
+
+			if (stop_boot) {
+				setenv("stop_boot", NULL);
+				bootcmd = NULL;
+			}
+
+			setenv("cnt", NULL);
+		} else {
+			/*
+			 * We should have recovery script at least in def env
+			 * as 'CONFIG_BTN_RECOVERY_SCRIPT' is defined here,
+			 * but show the error anyway, just in case...
+			 */
+			 printf_err("recovery script is missing in env!\n\n");
+		}
 	}
-#endif /* CONFIG_RECOVERY_MODE */
+#endif /* CONFIG_BTN_RECOVERY_SCRIPT && CONFIG_GPIO_RESET_BTN */
 
 #if defined(CONFIG_BOOTDELAY) &&\
 	   (CONFIG_BOOTDELAY >= 0)
@@ -182,23 +269,39 @@ void main_loop(void)
 	if (bootdelay >= 0 && bootcmd && !abortboot(bootdelay)) {
 		/* Try to boot */
 	#ifndef CFG_HUSH_PARSER
-		run_command(bootcmd, 0);
+		rc = run_command(bootcmd, 0);
 	#else
-		parse_string_outer(bootcmd, FLAG_PARSE_SEMICOLON |
-					    FLAG_EXIT_FROM_LOOP);
+		rc = parse_string_outer(bootcmd, FLAG_PARSE_SEMICOLON |
+						 FLAG_EXIT_FROM_LOOP);
 	#endif
 	}
 #else
 	if (bootcmd) {
 		/* Try to boot */
 	#ifndef CFG_HUSH_PARSER
-		run_command(bootcmd, 0);
+		rc = run_command(bootcmd, 0);
 	#else
-		parse_string_outer(bootcmd, FLAG_PARSE_SEMICOLON |
-					    FLAG_EXIT_FROM_LOOP);
+		rc = parse_string_outer(bootcmd, FLAG_PARSE_SEMICOLON |
+						 FLAG_EXIT_FROM_LOOP);
 	#endif
 	}
 #endif /* CONFIG_BOOTDELAY && CONFIG_BOOTDELAY >= 0 */
+
+#ifndef CFG_HUSH_PARSER
+	if (rc < 0) {
+#else
+	if (rc != 0) {
+#endif
+		puts("\n");
+		printf_err("failed to execute 'bootcmd'!\n");
+
+#if defined(CONFIG_CMD_HTTPD)
+		puts("   Starting web server for update...\n\n");
+		NetLoopHttpd();
+#else
+		puts("\n");
+#endif
+	}
 
 	/* Main loop for monitor command processing */
 #if defined(CFG_HUSH_PARSER)
@@ -388,7 +491,7 @@ int parse_line(char *line, char *argv[])
 		*line++ = '\0';
 	}
 
-	printf("## Error: too many args (max. %d)\n", CFG_MAXARGS);
+	printf_err("too many args (max. %d)\n", CFG_MAXARGS);
 
 	return nargs;
 }
@@ -540,7 +643,7 @@ int run_command(const char *cmd, int flag){
 		return -1;
 
 	if (strlen(cmd) >= CFG_CBSIZE) {
-		puts("## Error: command too long!\n");
+		printf_err("command too long!\n");
 		return -1;
 	}
 
@@ -585,7 +688,8 @@ int run_command(const char *cmd, int flag){
 
 		/* Look up command in command table */
 		if ((cmdtp = find_cmd(argv[0])) == NULL) {
-			printf("## Error: unknown command '%s' - try 'help'\n\n", argv[0]);
+			printf_err("unknown command '%s' - try 'help'\n", argv[0]);
+			puts("\n");
 
 			/* Give up after bad command */
 			rc = -1;
@@ -629,7 +733,7 @@ int do_run(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		char *arg;
 
 		if ((arg = getenv(argv[i])) == NULL) {
-			printf("## Error: '%s' not defined\n", argv[i]);
+			printf_err("'%s' not defined\n", argv[i]);
 			return 1;
 		}
 

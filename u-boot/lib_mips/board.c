@@ -74,7 +74,7 @@ void *sbrk(ptrdiff_t increment)
 	ulong new = old + increment;
 
 	if ((new < mem_malloc_start) || (new > mem_malloc_end)) {
-		printf("## Error: sbrk: out of memory "
+		printf_err("sbrk: out of memory "
 			"(%d requested > %d available)\n",
 			increment, mem_malloc_end - old);
 
@@ -125,7 +125,7 @@ static int init_func_ram(void)
 	if ((gd->ram_size = dram_init()) > 0)
 		return 0;
 
-	puts("## Error on RAM initialization!\n");
+	printf_err("on RAM initialization!\n");
 	return 1;
 }
 #endif
@@ -395,6 +395,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 #if defined(CONFIG_PCI)
 	/* Do pci configuration */
 	pci_init();
+#endif
+
+#if defined(CONFIG_USB)
+	usb_init();
 #endif
 
 	/* Leave this here (after malloc(), environment and PCI are working) */

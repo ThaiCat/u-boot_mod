@@ -18,7 +18,8 @@
 extern void qca_sys_clocks(u32 *cpu_clk, u32 *ddr_clk, u32 *ahb_clk,
 						   u32 *spi_clk, u32 *ref_clk);
 
-#if defined(OFFSET_MAC_ADDRESS)
+#if defined(CONFIG_CMD_MAC) &&\
+    defined(OFFSET_MAC_ADDRESS)
 /*
  * Show MAC address(es)
  */
@@ -78,7 +79,7 @@ int do_set_mac(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[]){
 	}
 
 	if(j != 5){
-		puts("## Error: given MAC address has wrong format (should be: xx:xx:xx:xx:xx:xx)!\n");
+		printf_err("given MAC address has wrong format (should be: xx:xx:xx:xx:xx:xx)!\n");
 		return(1);
 	}
 
@@ -86,7 +87,7 @@ int do_set_mac(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[]){
 	data_pointer = (unsigned char *)CONFIG_LOADADDR;
 
 	if(!data_pointer){
-		puts("## Error: couldn't allocate RAM for data block backup!\n");
+		printf_err("couldn't allocate RAM for data block backup!\n");
 		return(1);
 	}
 
@@ -115,7 +116,7 @@ int do_set_mac(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[]){
 
 U_BOOT_CMD(setmac, 2, 0, do_set_mac, "save new MAC address in FLASH\n", "xx:xx:xx:xx:xx:xx\n\t- change MAC address stored in FLASH (xx - value in hex format)\n");
 
-#endif /* if defined(OFFSET_MAC_ADDRESS) */
+#endif /* if defined(CONFIG_CMD_MAC) && defined(OFFSET_MAC_ADDRESS) */
 
 #if defined(OFFSET_ROUTER_MODEL)
 /*
@@ -184,10 +185,11 @@ U_BOOT_CMD(startsc, 1, 0, do_start_sc, "start serial console\n", NULL);
  * Erase environment sector
  */
 int do_default_env(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[]){
-	int	rc, rcode = 0;
+	int rcode = 0;
 	int len;
 	ulong end_addr, flash_sect_addr;
 #if defined(CFG_ENV_SECT_SIZE) && (CFG_ENV_SECT_SIZE > CFG_ENV_SIZE)
+	int rc;
 	ulong flash_offset;
 	unsigned char env_buffer[CFG_ENV_SECT_SIZE];
 #endif
@@ -246,7 +248,8 @@ U_BOOT_CMD(defenv, 1, 0, do_default_env, "reset environment variables to their d
  * button && echo pressed!
  * button || echo not pressed!
  */
-#if defined(CONFIG_CMD_BUTTON)
+#if defined(CONFIG_CMD_BUTTON) &&\
+    defined(CONFIG_GPIO_RESET_BTN)
 int do_button(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
 #if defined(CFG_HUSH_PARSER)
@@ -265,7 +268,7 @@ int do_button(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(button, 1, 1, do_button,
 	"get reset button status\n", NULL);
-#endif /* CONFIG_CMD_BUTTON */
+#endif /* CONFIG_CMD_BUTTON && CONFIG_GPIO_RESET_BTN */
 
 /*
  * Allows to delay execution
@@ -310,3 +313,15 @@ int do_ledoff(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 U_BOOT_CMD(ledon,  1, 1, do_ledon,  "turn LED/s on\n", NULL);
 U_BOOT_CMD(ledoff, 1, 1, do_ledoff, "turn LED/s off\n", NULL);
 #endif /* CONFIG_CMD_LED */
+
+/*
+ * Checks if last reset was caused by watchdog
+ */
+#if defined(CONFIG_CMD_RSTBYWDT)
+int do_rstbywdt(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+{
+	return !last_reset_wdt();
+}
+
+U_BOOT_CMD(rstbywdt, 1, 1, do_rstbywdt, "check if last reset was caused by watchdog\n", NULL);
+#endif /* CONFIG_CMD_RSTBYWDT */

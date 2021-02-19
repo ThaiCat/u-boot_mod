@@ -63,6 +63,9 @@ uchar default_environment[] = {
 #if defined(CONFIG_BOOTCOMMAND)
 	"bootcmd=" CONFIG_BOOTCOMMAND "\0"
 #endif
+#if defined(CONFIG_AUTOBOOT_STOP_STR)
+	"bootstopkey=" CONFIG_AUTOBOOT_STOP_STR "\0"
+#endif
 #if defined(CONFIG_RAMBOOTCOMMAND)
 	"ramboot=" CONFIG_RAMBOOTCOMMAND "\0"
 #endif
@@ -125,6 +128,9 @@ uchar default_environment[] = {
 #endif
 #if defined(CONFIG_NETCONSOLE_PORT)
 	"ncport=" MK_STR(CONFIG_NETCONSOLE_PORT) "\0"
+#endif
+#if defined(CONFIG_LSDK_KERNEL)
+	"lsdk_kernel=1\0"
 #endif
 #if defined(CONFIG_EXTRA_ENV_SETTINGS)
 	CONFIG_EXTRA_ENV_SETTINGS
@@ -202,12 +208,12 @@ void env_relocate(void)
 
 	if (gd->env_valid == 0) {
 #if !defined(CFG_ENV_IS_NOWHERE)
-		puts("** Warning: bad env CRC, using default,\n"
-			 "   use 'saveenv' to save it in FLASH\n\n");
+		printf_wrn("bad env CRC, using default,\n"
+			   "   use 'saveenv' to save it in FLASH\n\n");
 #endif
 
 		if (sizeof(default_environment) > ENV_SIZE) {
-			puts("## Error: default env is too big!\n");
+			printf_err("default env is too big!\n");
 			return;
 		}
 

@@ -166,6 +166,7 @@ void hang(void) __attribute__ ((noreturn));
 /* */
 long int dram_init(void);
 int      timer_init(void);
+void     usb_init(void);
 void     full_reset(void);
 void     all_led_on(void);
 void     all_led_off(void);
@@ -191,6 +192,7 @@ int  checkboard(void);
 int  checkflash(void);
 int  checkdram(void);
 int  last_stage_init(void);
+int  last_reset_wdt(void);
 int  reset_button_status(void);
 extern ulong monitor_flash_len;
 
@@ -200,8 +202,9 @@ void flash_perror (int);
 /* common/cmd_autoscript.c */
 int	autoscript (ulong addr);
 
-/* Default Load Address */
-extern u32 load_addr;
+extern u32 load_addr;	/* Default Load Address */
+extern u32 save_addr;	/* Default Save Address */
+extern u32 save_size;	/* Default Save Size */
 
 /* common/cmd_nvedit.c */
 int		env_init     (void);
@@ -209,7 +212,7 @@ void	env_relocate (void);
 char	*getenv	     (char *);
 int		getenv_r     (char *name, char *buf, unsigned len);
 int		saveenv	     (void);
-void	setenv	     (char *, char *);
+int	setenv	     (char *, char *);
 
 
 #ifdef CONFIG_ARM
@@ -548,6 +551,8 @@ int	tstc(void);
 void	putc(const char c);
 void	puts(const char *s);
 void	printf(const char *fmt, ...);
+void	printf_err(const char *fmt, ...);
+void	printf_wrn(const char *fmt, ...);
 //void	vprintf(const char *fmt, va_list args);
 
 /* stderr */
